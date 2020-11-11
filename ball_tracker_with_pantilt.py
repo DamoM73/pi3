@@ -3,6 +3,16 @@ from imutils.video import VideoStream
 import cv2
 import imutils
 import time
+import pantilthat
+
+def clamp(n):
+    # prevents pan or tilt from going out of range
+    if n < -90:
+        return -90
+    elif n > 90:
+        return 90
+    else:
+        return n
 
 # define the lower and upper boundaries of the ball in the HSV color space
 blue_lower = (89,138,50)
@@ -11,8 +21,14 @@ blue_upper = (125,255,164)
 # define frame size
 frame_width = 640
 frame_height = 480
+
+# define variables for pantilt
 x_cent = frame_width/2
 y_cent = frame_height/2
+pan = 0
+tilt = 0
+move_spd = 50
+
 
 # grab the reference to the webcam
 vs = VideoStream(src=0, usePiCamera=True).start()
@@ -50,15 +66,28 @@ while True:
         ((x,y), radius) = cv2.minEnclosingCircle(c)
         M = cv2.moments(c)
         centre = (int(M["m10"] / M["m00"]), int(M["m01"]/M["m00"]))
-        x_from_centre = int(x - x_cent)
-        y_from_centre = int(y - y_cent)
-        print(f"Adjust x:{x_from_centre}  y:{y_from_centre}")
         
         # only proceed if the radius meets minimum size
         if radius > 10:
             # draw the circle and centroid on the frame, then update the list of the tracked points
             cv2.circle(frame, (int(x), int(y)), int(radius),(0,255,255),2)
             cv2.circle(frame, center, 5, (0,0,255), -1)
+            
+            # calculate the values for pan
+            x_from_centre = int(x - x_cent)
+            pan += (x_from_centre//move_spd)*-1
+            pan = clamp(pan)
+            
+            # calculate the valutes for tilt
+            y_from_centre = int(y - y_cent)
+            tilt += (y_from_centre//move_spd)
+            tilt = clamp(tilt)
+        
+            print(f"Adjust x:{x_from_centre}\t{pan}\t\ty:{y_from_centre}")
+        
+        # move camera head
+        pantilthat.pan(pan)
+        pantilthat.tilt(tilt)
       
     # show frame to our screen
     cv2.imshow("Frame", frame)
