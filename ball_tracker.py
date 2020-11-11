@@ -1,6 +1,5 @@
 # import necessary packages
 from imutils.video import VideoStream
-import numpy as np
 import cv2
 import imutils
 import time
@@ -8,6 +7,12 @@ import time
 # define the lower and upper boundaries of the ball in the HSV color space
 blue_lower = (89,138,50)
 blue_upper = (125,255,164)
+
+# define frame size
+frame_width = 640
+frame_height = 480
+x_cent = frame_width/2
+y_cent = frame_height/2
 
 # grab the reference to the webcam
 vs = VideoStream(src=0, usePiCamera=True).start()
@@ -22,7 +27,7 @@ while True:
     
     # resize the frame, blur it flip it, and convert it to the HSV color space
     frame = cv2.flip(frame, -1)
-    frame = imutils.resize(frame, width=1200)
+    frame = imutils.resize(frame, width=frame_width, height=frame_height)
     blurred = cv2.GaussianBlur(frame, (11,11), 0)
     hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
     
@@ -45,6 +50,9 @@ while True:
         ((x,y), radius) = cv2.minEnclosingCircle(c)
         M = cv2.moments(c)
         centre = (int(M["m10"] / M["m00"]), int(M["m01"]/M["m00"]))
+        x_from_centre = int(x - x_cent)
+        y_from_centre = int(y - y_cent)
+        print(f"Adjust x:{x_from_centre}  y:{y_from_centre}")
         
         # only proceed if the radius meets minimum size
         if radius > 10:
